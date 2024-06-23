@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TicketData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SeperatorCharacter>|</SeperatorCharacter>
+  <ParamNameLine>Job|Setup|Lot|WaferID</ParamNameLine>
+  <ParamValueLine>CTW_X5_device1|Setup1|H34377_test5|02</ParamValueLine>
+</TicketData>
