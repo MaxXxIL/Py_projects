@@ -638,6 +638,93 @@ class UI(Ui_MainWindow, QMainWindow):
         self.sub_window = page(self.tableWidget)
         self.sub_window.Main_window = self
 
+        self.resizeEvent = self.onResize
+
+    def onResize(self, event):
+        # Call the parent class resize event
+        super().resizeEvent(event)
+
+        # Resize and reposition widgets
+        self.resizeWidgets()
+
+    def resizeWidgets(self):
+        # Get the new size of the central widget
+        central_rect = self.centralwidget.rect()
+
+        # Define constants
+        left_panel_width = 260
+        bottom_widgets_height = 60  # Approximate height needed for bottom widgets
+        margin = 20
+
+        # Resize the tabWidget
+        tab_width = central_rect.width() - left_panel_width - margin
+        tab_height = central_rect.height() - bottom_widgets_height - margin
+        self.tabWidget.setGeometry(QtCore.QRect(left_panel_width, 0, tab_width, tab_height))
+
+        # Resize the tableWidget if we're on the duplicate tab
+        if self.tabWidget.currentIndex() == 2:  # Assuming the duplicate tab is index 2
+            self.resizeTableWidget()
+
+        # Position widgets below the tabWidget
+        bottom_y = self.tabWidget.y() + self.tabWidget.height() + margin
+
+        # Position the horizontal scroll bar
+        scroll_bar_width = 281
+        scroll_bar_height = 16
+        scroll_bar_x = left_panel_width + (tab_width - scroll_bar_width) // 2
+        self.horizontalScrollBar.setGeometry(QtCore.QRect(
+            scroll_bar_x,
+            bottom_y,
+            scroll_bar_width,
+            scroll_bar_height
+        ))
+
+        # Position the label_6
+        label_width = 321
+        label_height = 20
+        self.label_6.setGeometry(QtCore.QRect(
+            left_panel_width + (tab_width - label_width) // 2,
+            bottom_y - label_height - 5,
+            label_width,
+            label_height
+        ))
+
+        # Position Extractor_prev and Extractor_next buttons
+        button_width = 75
+        button_height = 23
+        button_y = bottom_y + (scroll_bar_height - button_height) // 2
+
+        self.Extractor_prev.setGeometry(QtCore.QRect(
+            scroll_bar_x - button_width - 10,
+            button_y,
+            button_width,
+            button_height
+        ))
+
+        self.Extractor_next.setGeometry(QtCore.QRect(
+            scroll_bar_x + scroll_bar_width + 10,
+            button_y,
+            button_width,
+            button_height
+        ))
+
+    def resizeTableWidget(self):
+        # Get the new size of the tab widget
+        tab_rect = self.duplicate_tab.rect()
+
+        # Resize the tableWidget
+        margin = 20  # Adjust this value to set the margin around the table
+        table_width = tab_rect.width() - 2 * margin
+        table_height = tab_rect.height() - 70 - margin  # 70 is the approximate height of elements above the table
+
+        self.tableWidget.setGeometry(QtCore.QRect(margin, 70, table_width, table_height))
+
+        # Adjust column widths
+        if self.tableWidget.columnCount() > 0:
+            column_width = table_width // self.tableWidget.columnCount()
+            for i in range(self.tableWidget.columnCount()):
+                self.tableWidget.setColumnWidth(i, column_width)
+
 #------------- initialize all clickes --------------------------------------------------------------------------------------------------------------
     def init_button_actions(self):
         self.radioButton.clicked.connect(self.checkBox_set_offset)
@@ -692,7 +779,7 @@ class UI(Ui_MainWindow, QMainWindow):
         self.press_mouse_pos = None
         self.line_hist_flag = 0
 
-#-----------------------------------------checkbox-----------------------------------------------------
+    #-----------------------------------------checkbox-----------------------------------------------------
     def checkbox_manager(self):
         sender = self.sender().objectName()
         if sender == "Crop_checkbox":
