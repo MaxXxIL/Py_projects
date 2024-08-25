@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<root>
+    <version>
+        <number>1.0.0.0</number>
+    </version>
+    <Output_folder_name>C:\temp</Output_folder_name>
+    <Max_yield>80</Max_yield>
+    <Max_defects>5000</Max_defects>
+</root>
