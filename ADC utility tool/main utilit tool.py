@@ -638,92 +638,86 @@ class UI(Ui_MainWindow, QMainWindow):
         self.sub_window = page(self.tableWidget)
         self.sub_window.Main_window = self
 
+        self.initial_geometries = {
+            'tabWidget': self.tabWidget.geometry(),
+            'tableWidget': self.tableWidget.geometry(),
+            'horizontalScrollBar': self.horizontalScrollBar.geometry(),
+            'label_6': self.label_6.geometry(),
+            'Extractor_prev': self.Extractor_prev.geometry(),
+            'Extractor_next': self.Extractor_next.geometry(),
+            'label_image': self.label_image.geometry(),
+            'label_5': self.label_5.geometry(),
+            'label': self.label.geometry(),
+            'Source_image_size': self.Source_image_size.geometry()
+        }
+
+        # Set minimum sizes for widgets
+        self.setMinimumSize(800, 600)  # Set a minimum size for the main window
+        self.tabWidget.setMinimumSize(500, 400)
+        self.tableWidget.setMinimumSize(400, 300)
+        self.label_image.setMinimumSize(300, 300)
+        self.label_5.setMinimumSize(300, 300)
+
+        # Store the initial window size
+        self.initial_size = self.size()
+
+        # Connect the window's resize event to our custom method
         self.resizeEvent = self.onResize
 
     def onResize(self, event):
         # Call the parent class resize event
         super().resizeEvent(event)
 
-        # Resize and reposition widgets
-        self.resizeWidgets()
+        # Resize specific widgets
+        self.resizeSpecificWidgets()
 
-    def resizeWidgets(self):
-        # Get the new size of the central widget
-        central_rect = self.centralwidget.rect()
+    def resizeSpecificWidgets(self):
+        # Calculate the change in width and height
+        width_diff = max(0, self.width() - self.initial_size.width())
+        height_diff = max(0, self.height() - self.initial_size.height())
 
-        # Define constants
-        left_panel_width = 260
-        bottom_widgets_height = 60  # Approximate height needed for bottom widgets
-        margin = 20
+        # Resize tabWidget
+        new_tab_geometry = self.initial_geometries['tabWidget']
+        new_tab_width = max(new_tab_geometry.width() + width_diff, self.tabWidget.minimumWidth())
+        new_tab_height = max(new_tab_geometry.height() + height_diff, self.tabWidget.minimumHeight())
+        self.tabWidget.setGeometry(new_tab_geometry.x(), new_tab_geometry.y(), new_tab_width, new_tab_height)
 
-        # Resize the tabWidget
-        tab_width = central_rect.width() - left_panel_width - margin
-        tab_height = central_rect.height() - bottom_widgets_height - margin
-        self.tabWidget.setGeometry(QtCore.QRect(left_panel_width, 0, tab_width, tab_height))
+        # Resize widgets in all tabs
+        for i in range(self.tabWidget.count()):
+            tab = self.tabWidget.widget(i)
+            self.resizeTabContents(tab, width_diff, height_diff)
 
-        # Resize the tableWidget if we're on the duplicate tab
-        if self.tabWidget.currentIndex() == 2:  # Assuming the duplicate tab is index 2
-            self.resizeTableWidget()
+        # Adjust bottom widgets
+        bottom_widgets = ['horizontalScrollBar', 'label_6', 'Extractor_prev', 'Extractor_next']
+        for widget_name in bottom_widgets:
+            widget = getattr(self, widget_name)
+            new_geometry = self.initial_geometries[widget_name]
+            new_y = min(new_geometry.y() + height_diff, self.height() - new_geometry.height() - 10)
+            widget.setGeometry(new_geometry.x(), new_y, new_geometry.width(), new_geometry.height())
 
-        # Position widgets below the tabWidget
-        bottom_y = self.tabWidget.y() + self.tabWidget.height() + margin
+    def resizeTabContents(self, tab, width_diff, height_diff):
+        if tab == self.crop_tab:
+            self.resizeWidget(self.label_image, width_diff, height_diff)
+        elif tab == self.image_extractor_tab:
+            self.resizeWidget(self.label_5, width_diff, height_diff)
+        elif tab == self.duplicate_tab:
+            self.resizeWidget(self.tableWidget, width_diff, height_diff)
+            self.adjustTableColumns(self.tableWidget)
 
-        # Position the horizontal scroll bar
-        scroll_bar_width = 281
-        scroll_bar_height = 16
-        scroll_bar_x = left_panel_width + (tab_width - scroll_bar_width) // 2
-        self.horizontalScrollBar.setGeometry(QtCore.QRect(
-            scroll_bar_x,
-            bottom_y,
-            scroll_bar_width,
-            scroll_bar_height
-        ))
+    def resizeWidget(self, widget, width_diff, height_diff):
+        new_geometry = widget.geometry()
+        new_width = max(new_geometry.width() + width_diff, widget.minimumWidth())
+        new_height = max(new_geometry.height() + height_diff, widget.minimumHeight())
+        widget.setGeometry(new_geometry.x(), new_geometry.y(), new_width, new_height)
 
-        # Position the label_6
-        label_width = 321
-        label_height = 20
-        self.label_6.setGeometry(QtCore.QRect(
-            left_panel_width + (tab_width - label_width) // 2,
-            bottom_y - label_height - 5,
-            label_width,
-            label_height
-        ))
-
-        # Position Extractor_prev and Extractor_next buttons
-        button_width = 75
-        button_height = 23
-        button_y = bottom_y + (scroll_bar_height - button_height) // 2
-
-        self.Extractor_prev.setGeometry(QtCore.QRect(
-            scroll_bar_x - button_width - 10,
-            button_y,
-            button_width,
-            button_height
-        ))
-
-        self.Extractor_next.setGeometry(QtCore.QRect(
-            scroll_bar_x + scroll_bar_width + 10,
-            button_y,
-            button_width,
-            button_height
-        ))
-
-    def resizeTableWidget(self):
-        # Get the new size of the tab widget
-        tab_rect = self.duplicate_tab.rect()
-
-        # Resize the tableWidget
-        margin = 20  # Adjust this value to set the margin around the table
-        table_width = tab_rect.width() - 2 * margin
-        table_height = tab_rect.height() - 70 - margin  # 70 is the approximate height of elements above the table
-
-        self.tableWidget.setGeometry(QtCore.QRect(margin, 70, table_width, table_height))
-
-        # Adjust column widths
-        if self.tableWidget.columnCount() > 0:
-            column_width = table_width // self.tableWidget.columnCount()
-            for i in range(self.tableWidget.columnCount()):
-                self.tableWidget.setColumnWidth(i, column_width)
+    def adjustTableColumns(self, table):
+        if table.columnCount() > 0:
+            available_width = table.width() - 2  # Account for borders
+            if table.verticalScrollBar().isVisible():
+                available_width -= table.verticalScrollBar().width()
+            column_width = max(available_width // table.columnCount(), 100)  # Set a minimum column width
+            for i in range(table.columnCount()):
+                table.setColumnWidth(i, column_width)
 
 #------------- initialize all clickes --------------------------------------------------------------------------------------------------------------
     def init_button_actions(self):
